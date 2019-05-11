@@ -7,11 +7,16 @@
     <x>0</x>
     <y>0</y>
     <width>1619</width>
-    <height>672</height>
+    <height>704</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>projektMMM</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow{
+	background-color: white;
+}</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QCustomPlot" name="customPlot" native="true">
@@ -308,6 +313,22 @@
     </property>
     <property name="pixmap">
      <pixmap resource="resource.qrc">:/resources/pic/pic.png</pixmap>
+    </property>
+   </widget>
+   <widget class="QSlider" name="horizontalSlider">
+    <property name="geometry">
+     <rect>
+      <x>59</x>
+      <y>601</y>
+      <width>791</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="maximum">
+     <number>100</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
     </property>
    </widget>
   </widget>

@@ -29,6 +29,7 @@ private slots:
     void checkValidation();
     void drawSpecialButtons();
 
+    void on_horizontalSlider_valueChanged(int value);
 
 private:
     Ui::MainWindow *ui;

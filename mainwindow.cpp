@@ -6,12 +6,12 @@
 #include <cmath>
 #include <math.h>
 
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
 
     MainWindow::checkValidation();
     MainWindow::drawIcons();
@@ -88,18 +88,36 @@ void MainWindow::drawSpecialButtons()           // dla sinusoidy i fali prostok�
     }
 }
 
-void MainWindow::paintEvent(QPaintEvent *event)
+void MainWindow::paintEvent(QPaintEvent *event)                 //Rysowanie prostokątów i linii w wizualizacji
 {
     QPainter painter(this);
 
-    QPen pen;
+    QPoint pozycja = ui->picLabel->pos();                       //bierze pozycję picLabel z obrazkiem
+
+    /*QPen pen;
     pen.setColor(Qt::blue);
     painter.setPen(pen);
     QBrush brush;
     brush.setColor(Qt::blue);
     brush.setStyle(Qt::SolidPattern);
     painter.setBrush(brush);
-    painter.drawRect(QRect(60, 10, 20, 20));
+    */
+    painter.setPen(QPen(Qt::blue, 0));
+    painter.setBrush(QBrush(Qt::blue, Qt::SolidPattern));
+    //int polozenie_x = 1000;
+    //int polozenie_y = 182;
+    int polozenie_x = pozycja.x();
+    int polozenie_y = pozycja.y()+12;
+    int wysokosc = 144;
+    int wypelnienie = ui->horizontalSlider->value();
+    painter.drawRect(QRect(polozenie_x+48, polozenie_y+52+wysokosc-wysokosc*wypelnienie/100, 191, wysokosc*wypelnienie/100));
+    painter.drawRect(QRect(polozenie_x+280, polozenie_y+229+wysokosc-wysokosc*wypelnienie/100, 191, wysokosc*wypelnienie/100));
+    int gruboscPen = (wypelnienie*29/100)-1;
+    painter.setPen(QPen(Qt::blue, gruboscPen));
+    painter.drawLine(polozenie_x+144, polozenie_y+47, polozenie_x+144, polozenie_y+144+150);
+    painter.drawLine(polozenie_x+375, polozenie_y+223, polozenie_x+375, polozenie_y+223+150);
+    painter.drawLine(polozenie_x+507, polozenie_y+400, polozenie_x+507, polozenie_y+400+150);
+
 }
 
 void MainWindow::makePlot()
@@ -182,4 +200,10 @@ void MainWindow::makePlot()
     ui->customPlot2->xAxis->setRange(0, koniec);
     ui->customPlot2->yAxis->setRange(0, calka2max);
     ui->customPlot2->replot();
+}
+
+
+void MainWindow::on_horizontalSlider_valueChanged(int value)        //Jak się ruszy sliderem to wykonuje paintEvent od nowa
+{
+    QWidget::update();
 }
