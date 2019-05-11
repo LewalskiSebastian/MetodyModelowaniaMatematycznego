@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>pic/pic.png</file>
+        <file>pic/sine.png</file>
+        <file>pic/square.png</file>
+        <file>pic/step.png</file>
+    </qresource>
+</RCC>

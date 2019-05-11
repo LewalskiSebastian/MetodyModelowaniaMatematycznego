@@ -6,12 +6,27 @@
 #include <cmath>
 #include <math.h>
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    MainWindow::checkValidation();
+    MainWindow::drawIcons();
     MainWindow::makePlot();
+
+
+     connect(ui->sine, SIGNAL(clicked()), this, SLOT(makePlot()));
+     connect(ui->square, SIGNAL(clicked()), this, SLOT(makePlot()));
+     connect(ui->step, SIGNAL(clicked()), this, SLOT(makePlot()));
+     connect(ui->lineEdit_A1, SIGNAL(editingFinished()), this, SLOT(makePlot()));  // editingFinished lub returnPressed ?
+     connect(ui->lineEdit_A2, SIGNAL(editingFinished()), this, SLOT(makePlot()));
+     connect(ui->lineEdit_time, SIGNAL(editingFinished()), this, SLOT(makePlot()));
+     connect(ui->lineEdit_samples, SIGNAL(editingFinished()), this, SLOT(makePlot()));
+     connect(ui->lineEdit_period, SIGNAL(editingFinished()), this, SLOT(makePlot()));
+     connect(ui->lineEdit_ampl, SIGNAL(editingFinished()), this, SLOT(makePlot()));
 }
 
 MainWindow::~MainWindow()
@@ -19,45 +34,128 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::drawIcons()
+{
+    ui->sine->setIcon(QIcon(":/resources/pic/sine.png"));
+    ui->sine->setIconSize(QSize(95, 150));
+    ui->square->setIcon(QIcon(":/resources/pic/square.png"));
+    ui->square->setIconSize(QSize(80, 150));
+    ui->step->setIcon(QIcon(":/resources/pic/step.png"));
+    ui->step->setIconSize(QSize(80, 150));
+}
+
+
+void MainWindow::checkValidation()
+{
+    QDoubleValidator *hole= new QDoubleValidator(this);             // do odpływów ze zbiorników
+    QIntValidator *parameters= new QIntValidator(0, 1000, this);     // do liczby sekund symulacji i liczby próbek
+    QDoubleValidator *parameters2 = new QDoubleValidator(this);      // do amplitudy i okresu
+    QLocale curLocale(QLocale("en_GB"));
+    QLocale::setDefault(curLocale);
+    hole->setNotation(QDoubleValidator::StandardNotation);
+    hole->setRange(0.0, 10.0, 4);
+    parameters2->setNotation(QDoubleValidator::StandardNotation);
+    parameters2->setRange(0.0, 100.0, 4);
+    ui->lineEdit_A1->setValidator(hole);           // A1
+    ui->lineEdit_A2->setValidator(hole);           // A2
+    ui->lineEdit_time->setValidator(parameters);
+    ui->lineEdit_samples->setValidator(parameters);
+    ui->lineEdit_ampl->setValidator(parameters2);
+    ui->lineEdit_period->setValidator(parameters2);
+}
+
+void MainWindow::drawSpecialButtons()           // dla sinusoidy i fali prostokątnej rysuje dodatkowe pole(a)
+{
+    if (ui->sine->isChecked() == TRUE)
+    {
+        ui->lineEdit_period->setVisible(TRUE);
+        ui->label_7->setVisible(TRUE);
+    }
+    else if(ui->square->isChecked() == TRUE)
+    {
+        ui->lineEdit_period->setVisible(TRUE);
+        ui->label_7->setVisible(TRUE);
+    }
+    else if(ui->sine->isChecked() == FALSE)
+    {
+        ui->lineEdit_period->setVisible(FALSE);
+        ui->label_7->setVisible(FALSE);
+    }
+    else if(ui->square->isChecked() == FALSE)
+    {
+        ui->lineEdit_period->setVisible(FALSE);
+        ui->label_7->setVisible(FALSE);
+    }
+}
+
+void MainWindow::paintEvent(QPaintEvent *event)
+{
+    QPainter painter(this);
+
+    QPen pen;
+    pen.setColor(Qt::blue);
+    painter.setPen(pen);
+    QBrush brush;
+    brush.setColor(Qt::blue);
+    brush.setStyle(Qt::SolidPattern);
+    painter.setBrush(brush);
+    painter.drawRect(QRect(60, 10, 20, 20));
+}
+
 void MainWindow::makePlot()
 {
-    double t = 120; //liczba sekund symulacji
-    double s = 100; //liczba próbek na sekundę
-    // generate some data:
-    QVector<double> x(t*s+1), h1(t*s+1), h2(t*s+1); // initialize with entries 0..100
-    srand (time(NULL));
-    /*for (int i=0; i<101; ++i)
-    {
-      x[i] = i/10.0; // x goes from -1 to 1
-      y[i] = i/100.0+rand()%100/1000.0+0.1; // let's plot a quadratic function
-    }*/
-    double A1 = 0.01;
-    double A2 = 0.015;
+    drawSpecialButtons();
+    checkValidation();
+    double t = (ui->lineEdit_time->text()).toDouble();       // liczba sekund symulacji
+    double s = (ui->lineEdit_samples->text()).toDouble();    // liczba próbek na sekundę
+
+    QVector<double> x(t*s+1), h1(t*s+1), h2(t*s+1);         // wektor przechowujacy wartosci danych do wykresu
+
+    double A1 = (ui->lineEdit_A1->text()).toDouble();      // pole przekroju odplywu nr1
+    double A2 = (ui->lineEdit_A2->text()).toDouble();      // pole przekroju odplywu nr2
+    double period = (ui->lineEdit_period->text()).toDouble(); // okres
+    double ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
+
     double g = 9.81;
-    double b = 1.0;      //pole przekroju
     double calka = 0.0;
     double przyrost = 0.0;
     double calka2 = 0.0;
     double przyrost2 = 0.0;
-    double u = 0.0;
+    double u;
     double calka1max = 0.0;
     double calka2max = 0.0;
     double koniec = t;
     x[0] = 0.0;
-    h1[0] = 0.1;       //h(0) = y[0]
+    h1[0] = 0.1;       //h(0) = y[0]  warunki początkowe
     h2[0] = 0.1;
-    for (int i=1; i<t*s+1; ++i)
+    int okr = period*s;
+    for (int i=1; i<t*s+1; i++)
         {
-        if(i < 500){
-            u = 1;
-        }else{
-            u = 0;
+        if (ui->sine->isChecked() == TRUE)
+        {
+            u = ampl*sin(i*2*3.1415/(period*s) /*- 3.1415/2*/)+ampl;
         }
-          x[i] = i/s; // x goes from -1 to 1
-          przyrost = ((u-A1*sqrt(2*g*h1[i-1]))/(3.14*h1[i-1]*h1[i-1]))*0.01;
+        else if (ui->step->isChecked() == TRUE)
+        {
+            u = ampl;
+        }
+        else if (ui->square->isChecked() == TRUE)
+        {
+            if (okr >= 0)   u = ampl;
+            else if(okr >= -1000 && okr < 0) u = 0;
+            else okr = period*s;
+            okr--;
+        }
+        else u = 0;
+          x[i] = i/s; // x goes from
+
+         // if(h1[i-1]==0) przyrost = u;
+          /*else*/ przyrost = ((u-A1*sqrt(2*g*h1[i-1]))/(3.14*h1[i-1]*h1[i-1]))*(1/s);
           calka = h1[i-1]+przyrost;
-          h1[i] = calka; // let's plot a quadratic function
-          przyrost2 = ((A1*sqrt(2*g*h1[i-1])-A2*sqrt(2*g*h2[i-1]))/(3.14*h2[i-1]*h2[i-1]))*0.01;
+          h1[i] = calka;
+
+          //if(h2[i-1]==0) przyrost2 = A1*sqrt(2*g*h1[i-1]);
+          /*else*/ przyrost2 = ((A1*sqrt(2*g*h1[i-1])-A2*sqrt(2*g*h2[i-1]))/(3.14*h2[i-1]*h2[i-1]))*(1/s);
           calka2 = h2[i-1]+przyrost2;
           h2[i] = calka2;
           if(calka1max < calka) calka1max = calka;
@@ -68,8 +166,8 @@ void MainWindow::makePlot()
     ui->customPlot->addGraph();
     ui->customPlot->graph(0)->setData(x, h1);
     // give the axes some labels:
-    ui->customPlot->xAxis->setLabel("czas");
-    ui->customPlot->yAxis->setLabel("ilość wody w zbiorniku 1");
+    ui->customPlot->xAxis->setLabel("czas [s]");
+    ui->customPlot->yAxis->setLabel("wysokość słupa wody w zbiorniku 1 [m]");
     // set axes ranges, so we see all data:
     ui->customPlot->xAxis->setRange(0, koniec);
     ui->customPlot->yAxis->setRange(0, calka1max);
@@ -78,8 +176,8 @@ void MainWindow::makePlot()
     ui->customPlot2->addGraph();
     ui->customPlot2->graph(0)->setData(x, h2);
     // give the axes some labels:
-    ui->customPlot2->xAxis->setLabel("czas");
-    ui->customPlot2->yAxis->setLabel("ilość wody w zbiorniku 2");
+    ui->customPlot2->xAxis->setLabel("czas [s]");
+    ui->customPlot2->yAxis->setLabel("wysokość słupa wody w zbiorniku 2 [m]");
     // set axes ranges, so we see all data:
     ui->customPlot2->xAxis->setRange(0, koniec);
     ui->customPlot2->yAxis->setRange(0, calka2max);
