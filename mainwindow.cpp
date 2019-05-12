@@ -88,7 +88,7 @@ void MainWindow::drawSpecialButtons()           // dla sinusoidy i fali prostok�
     }
 }
 
-double MainWindow::f(int x, double A, QVector<double> h, QVector<double> u1, QVector<double>& u2){
+double MainWindow::f(int x, double A, QVector<double> h, QVector<double> u1, QVector<double>& u2){      //funkcja co zwraca wartość funkcji z treści zadania
     double g = 9.81;                                        //przyspieszenie ziemskie
     double t = (ui->lineEdit_time->text()).toDouble();       // liczba sekund symulacji
     double s = (ui->lineEdit_samples->text()).toDouble();    // liczba próbek na sekundę
@@ -96,13 +96,20 @@ double MainWindow::f(int x, double A, QVector<double> h, QVector<double> u1, QVe
     //double A2 = (ui->lineEdit_A2->text()).toDouble();      // pole przekroju odplywu nr2
     double period = (ui->lineEdit_period->text()).toDouble(); // okres
     double ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
-    u2[x] = A*sqrt(2*g*h[x-1]);
-    qInfo() << h[x-1];
-    return ((u1[x]-A*sqrt(2*g*h[x-1]))/(3.14*h[x-1]*h[x-1]))*(1/s);
+    double wynik = 0;
+    if(h[x-1] > u1[x]/4){                                   //Takie zabezpieczenie że jak mało jest wody w zbiorniku to żeby się nie dzieliło przez zero zamienia
+        u2[x] = A*sqrt(2*g*h[x-1]);                         //poziom wody na wartość wpływającego strumienia
+        wynik = ((u1[x]-A*sqrt(2*g*h[x-1]))/(3.14*h[x-1]*h[x-1]))*(1/s);
+    }else{
+        double h = u1[x];
+        u2[x] = A*sqrt(2*g*h);
+        wynik = ((u1[x]-A*sqrt(2*g*h))/(3.14*h*h))*(1/s);
+    }
+    return wynik;
     //return 0;
 }
 
-QVector<double> MainWindow::calkowanie(){
+QVector<double> MainWindow::calkowanie(){               //to jest jeszcze nie gotowe, nie patrzeć!!!!!
     double g = 9.81;
     double s = 0;
     double st = 0;
@@ -137,12 +144,12 @@ QVector<double> MainWindow::calkowanie(){
       return h;
 }
 
-double MainWindow::calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2){
-    double calkaMax = 0;
+double MainWindow::calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2){        //to jest całkowanie metodą kwadratów
+    double calkaMax = 0;                                //wartość maks całki potrzebna do narysowania wykresu (maks podziałki pionowej)
     int t = (ui->lineEdit_time->text()).toInt();       // liczba sekund symulacji
     int s = (ui->lineEdit_samples->text()).toInt();    // liczba próbek na sekundę
     double calka = 0;
-    for(int i=1; i<t*s+1; i++){
+    for(int i=1; i<t*s+1; i++){                         //tutaj całkujemy metodą kwadratów
         calka += f(i, A, h, u1, u2);
         h[i] = calka;
         if(calkaMax < calka) calkaMax = calka;
@@ -292,8 +299,8 @@ void MainWindow::makePlot()
     u2[0] = 0.0;
     u3[0] = 0.0;
 
-    for(int i = 1; i<t*s+1; i++){
-        x[i] = double(i)/double(s);
+    for(int i = 1; i<t*s+1; i++){                                               //Przypisujemy wartości wektorowi wejściowemu strumiania wody
+        x[i] = double(i)/double(s);                 //tutaj to liczymy wartości jakie będą na poziomej podziałce
         if (ui->sine->isChecked() == TRUE)
         {
             u1[i] = (ampl/2)*sin(i*2*3.1415/(period*s) /*- 3.1415/2*/)+(ampl/2);
@@ -309,12 +316,11 @@ void MainWindow::makePlot()
         }
     }
 
-    calka1max = calkowanieKwadrat(A1, h1, u1, u2);
-    calka2max = calkowanieKwadrat(A2, h2, u2, u3);
-
+    calka1max = calkowanieKwadrat(A1, h1, u1, u2);                              //liczymy pierwszy wykres korzystając z metody kwadratów
+    calka2max = calkowanieKwadrat(A2, h2, u2, u3);                              //liczymy drugi wykres korzystając z metody kwadratów
 
     // create graph and assign data to it:
-    ui->customPlot->addGraph();
+    ui->customPlot->addGraph();                                             //Tutaj będziemy rysowali wykresy korzystając z customPlot
     ui->customPlot->graph(0)->setData(x, h1);
     // give the axes some labels:
     ui->customPlot->xAxis->setLabel("czas [s]");
