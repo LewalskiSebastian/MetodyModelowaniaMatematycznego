@@ -22,6 +22,9 @@ public:
     ~MainWindow();
 
     virtual void paintEvent(QPaintEvent *event);
+    QVector<double> calkowanie();
+    double calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2);
+    double f(int x, double A, QVector<double> h, QVector<double> u1, QVector<double>& u2);
 
 private slots:
     void makePlot();
