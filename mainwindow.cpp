@@ -144,8 +144,9 @@ QVector<double> MainWindow::calkowanie(){               //to jest jeszcze nie go
       return h;
 }
 
-double MainWindow::calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2){        //to jest całkowanie metodą kwadratów
+QVector<double> MainWindow::calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2){        //to jest całkowanie metodą kwadratów
     double calkaMax = 0;                                //wartość maks całki potrzebna do narysowania wykresu (maks podziałki pionowej)
+    double uMax = 0;                                    //wartość maks całki potrzebna do narysowania wykresu (maks podziałki pionowej)
     int t = (ui->lineEdit_time->text()).toInt();       // liczba sekund symulacji
     int s = (ui->lineEdit_samples->text()).toInt();    // liczba próbek na sekundę
     double calka = 0;
@@ -153,8 +154,12 @@ double MainWindow::calkowanieKwadrat(double A, QVector<double>& h, QVector<doubl
         calka += f(i, A, h, u1, u2);
         h[i] = calka;
         if(calkaMax < calka) calkaMax = calka;
+        if(uMax < u2[i]) uMax = u2[i];
     }
-    return calkaMax;
+    QVector<double> max(2);
+    max[0] = calkaMax;
+    max[1] = uMax;
+    return max;
 }
 
 void MainWindow::paintEvent(QPaintEvent *event)                 //Rysowanie prostokątów i linii w wizualizacji
@@ -175,20 +180,24 @@ void MainWindow::paintEvent(QPaintEvent *event)                 //Rysowanie pros
     painter.setBrush(QBrush(Qt::blue, Qt::SolidPattern));
     //int polozenie_x = 1000;
     //int polozenie_y = 182;
+    int x = ui->horizontalSlider->value()*(ui->lineEdit_time->text()).toInt()*(ui->lineEdit_samples->text()).toInt()/100;
     int polozenie_x = pozycja.x();
     int polozenie_y = pozycja.y()+12;
     int wysokosc = 144;
-    int wypelnienie = ui->horizontalSlider->value();
-    painter.drawRect(QRect(polozenie_x+48, polozenie_y+52+wysokosc-wysokosc*wypelnienie/100, 191, wysokosc*wypelnienie/100));
-    painter.drawRect(QRect(polozenie_x+280, polozenie_y+229+wysokosc-wysokosc*wypelnienie/100, 191, wysokosc*wypelnienie/100));
+    double poziom1 = wysokosc*(h1[x]/calka1max);
+    double poziom2 = wysokosc*(h2[x]/calka2max);
+    //int wypelnienie = ui->horizontalSlider->value();
+    painter.drawRect(QRect(polozenie_x+48, polozenie_y+52+wysokosc-poziom1, 191, poziom1));
+    painter.drawRect(QRect(polozenie_x+280, polozenie_y+229+wysokosc-poziom2, 191, poziom2));
 
     double s = (ui->lineEdit_samples->text()).toDouble();    // liczba próbek na sekundę
     double period = (ui->lineEdit_period->text()).toDouble(); // okres
-    int x = ui->horizontalSlider->value()*(ui->lineEdit_time->text()).toInt()*(ui->lineEdit_samples->text()).toInt()/100;
+    double ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
+    /*
     double u = 0;
     if (ui->sine->isChecked() == TRUE)
     {
-        u = 50*sin(x*2*3.1415/(period*s) /*- 3.1415/2*/)+50;
+        u = 50*sin(x*2*3.1415/(period*s) )+50;
     }
     else if (ui->step->isChecked() == TRUE)
     {
@@ -199,12 +208,15 @@ void MainWindow::paintEvent(QPaintEvent *event)                 //Rysowanie pros
         if (int(x)%(int(period*s)) <= int(period*s/2))   u = 100;
         else u = 0;
     }
-
-    int gruboscPen = (int(u)*29/100)-1;
+    */
+    int gruboscPen = (u1[x]*29)-1;
     painter.setPen(QPen(Qt::blue, gruboscPen));
-
     painter.drawLine(polozenie_x+144, polozenie_y+47, polozenie_x+144, polozenie_y+144+150);
+    gruboscPen = ((u2[x]/u2max)*29)-1;
+    painter.setPen(QPen(Qt::blue, gruboscPen));
     painter.drawLine(polozenie_x+375, polozenie_y+223, polozenie_x+375, polozenie_y+223+150);
+    gruboscPen = ((u3[x]/u3max)*29)-1;
+    painter.setPen(QPen(Qt::blue, gruboscPen));
     painter.drawLine(polozenie_x+507, polozenie_y+400, polozenie_x+507, polozenie_y+400+150);
 
 }
@@ -282,14 +294,17 @@ void MainWindow::makePlot()
     double ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
     double A1 = (ui->lineEdit_A1->text()).toDouble();      // pole przekroju odplywu nr1
     double A2 = (ui->lineEdit_A2->text()).toDouble();      // pole przekroju odplywu nr2
-    double calka1max = 0.0;                                //maksywalna wartośc całki potrzebna do określenia wysokości wykresu
-    double calka2max = 0.0;
+    calka1max = 0.0;
+    calka2max = 0.0;
+    u2max = 0.0;
+    u3max = 0.0;
 
-    QVector<double> u1(t*s+1);                                                   //Wektor strumienia wejsciowego wody (pobudzenia)
-    QVector<double> u2(t*s+1);                                                   //Wektor strumienia wejściowego wody do drugiego pojemnika
-    QVector<double> u3(t*s+1);                                                   //Wektor strumienia wyjściowego wody z drugiego pojemnika (potrzebny tylko do wizualizacji)
-    QVector<double> h1(t*s+1);                                                   //Wektor wysokości wody w pierwszym pojemniku
-    QVector<double> h2(t*s+1);                                                   //Wektor wysokości wody w drugim pojemniku
+
+    u1.resize(t*s+1);                                                   //Wektor strumienia wejsciowego wody (pobudzenia)
+    u2.resize(t*s+1);                                                   //Wektor strumienia wejściowego wody do drugiego pojemnika
+    u3.resize(t*s+1);                                                   //Wektor strumienia wyjściowego wody z drugiego pojemnika (potrzebny tylko do wizualizacji)
+    h1.resize(t*s+1);                                                   //Wektor wysokości wody w pierwszym pojemniku
+    h2.resize(t*s+1);                                                   //Wektor wysokości wody w drugim pojemniku
     QVector<double> x(t*s+1);
 
     x[0] = 0.0;
@@ -316,8 +331,16 @@ void MainWindow::makePlot()
         }
     }
 
-    calka1max = calkowanieKwadrat(A1, h1, u1, u2);                              //liczymy pierwszy wykres korzystając z metody kwadratów
-    calka2max = calkowanieKwadrat(A2, h2, u2, u3);                              //liczymy drugi wykres korzystając z metody kwadratów
+    QVector<double> max1(2);
+    QVector<double> max2(2);
+
+    max1 = calkowanieKwadrat(A1, h1, u1, u2);                              //liczymy pierwszy wykres korzystając z metody kwadratów
+    max2 = calkowanieKwadrat(A2, h2, u2, u3);                              //liczymy drugi wykres korzystając z metody kwadratów
+
+    calka1max = max1[0];
+    calka2max = max2[0];
+    u2max = max1[1];
+    u3max = max2[1];
 
     // create graph and assign data to it:
     ui->customPlot->addGraph();                                             //Tutaj będziemy rysowali wykresy korzystając z customPlot
@@ -342,7 +365,50 @@ void MainWindow::makePlot()
 }
 
 
+
 void MainWindow::on_horizontalSlider_valueChanged(int value)        //Jak się ruszy sliderem to wykonuje paintEvent od nowa
 {
     QWidget::update();
 }
+/*
+void Wektory::wpiszu1(QVector<double> u){
+    u1 = u;
+}
+
+void Wektory::wpiszu2(QVector<double> u){
+    u2 = u;
+}
+
+void Wektory::wpiszu3(QVector<double> u){
+    u3 = u;
+}
+
+void Wektory::wpiszh1(QVector<double> h){
+    h1 = h;
+}
+
+void Wektory::wpiszh2(QVector<double> h){
+    h2 = h;
+}
+
+QVector<double> Wektory::podaju1(){
+    return u1;
+}
+
+QVector<double> Wektory::podaju2(){
+    return u2;
+}
+
+QVector<double> Wektory::podaju3(){
+    return u3;
+}
+
+QVector<double> Wektory::podajh1(){
+    return h1;
+}
+
+QVector<double> Wektory::podajh2(){
+    return h2;
+}
+*/
+

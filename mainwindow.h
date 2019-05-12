@@ -11,6 +11,7 @@
 
 namespace Ui {
 class MainWindow;
+//class Wektory;
 }
 
 class MainWindow : public QMainWindow
@@ -23,8 +24,18 @@ public:
 
     virtual void paintEvent(QPaintEvent *event);
     QVector<double> calkowanie();
-    double calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2);
+    QVector<double> calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2);
     double f(int x, double A, QVector<double> h, QVector<double> u1, QVector<double>& u2);
+
+    QVector<double> u1;                                                   //Wektor strumienia wejsciowego wody (pobudzenia)
+    QVector<double> u2;                                                   //Wektor strumienia wejściowego wody do drugiego pojemnika
+    QVector<double> u3;                                                   //Wektor strumienia wyjściowego wody z drugiego pojemnika (potrzebny tylko do wizualizacji)
+    QVector<double> h1;                                                   //Wektor wysokości wody w pierwszym pojemniku
+    QVector<double> h2;                                                   //Wektor wysokości wody w drugim pojemniku
+    double u2max = 0.0;
+    double u3max = 0.0;
+    double calka1max = 0.0;                                //maksywalna wartośc całki potrzebna do określenia wysokości wykresu
+    double calka2max = 0.0;
 
 private slots:
     void makePlot();
@@ -37,5 +48,33 @@ private slots:
 private:
     Ui::MainWindow *ui;
 };
+/*
+class Wektory
+{
+    Q_OBJECT
 
+public:
+    void wpiszu1(QVector<double> u);
+    void wpiszu2(QVector<double> u);
+    void wpiszu3(QVector<double> u);
+    void wpiszh1(QVector<double> h);
+    void wpiszh2(QVector<double> h);
+
+    QVector<double> podaju1();
+    QVector<double> podaju2();
+    QVector<double> podaju3();
+    QVector<double> podajh1();
+    QVector<double> podajh2();
+
+private slots:
+    QVector<double> u1;                                                   //Wektor strumienia wejsciowego wody (pobudzenia)
+    QVector<double> u2;                                                   //Wektor strumienia wejściowego wody do drugiego pojemnika
+    QVector<double> u3;                                                   //Wektor strumienia wyjściowego wody z drugiego pojemnika (potrzebny tylko do wizualizacji)
+    QVector<double> h1;                                                   //Wektor wysokości wody w pierwszym pojemniku
+    QVector<double> h2;                                                   //Wektor wysokości wody w drugim pojemniku
+
+private:
+    Ui::Wektory *ui;
+};
+*/
 #endif // MAINWINDOW_H
