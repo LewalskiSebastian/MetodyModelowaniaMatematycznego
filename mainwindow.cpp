@@ -12,12 +12,19 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    //ui->pasekPostepu->hide();
 
     MainWindow::checkValidation();
     MainWindow::drawIcons();
     MainWindow::makePlot();
 
+    timer = new QTimer(this);
 
+    connect(ui->start, SIGNAL(clicked()), this, SLOT(makePlot()));
+    //connect(ui->wizualizacja, SIGNAL(clicked()), this, ui->horizontalSlider()));
+    connect(ui->wizualizacja, SIGNAL(clicked()), this, SLOT(timerWizualizacja()));
+    connect(timer, SIGNAL(timeout()), this, SLOT(wizualizacja()));
+    /*
      connect(ui->sine, SIGNAL(clicked()), this, SLOT(makePlot()));
      connect(ui->square, SIGNAL(clicked()), this, SLOT(makePlot()));
      connect(ui->step, SIGNAL(clicked()), this, SLOT(makePlot()));
@@ -27,11 +34,33 @@ MainWindow::MainWindow(QWidget *parent) :
      connect(ui->lineEdit_samples, SIGNAL(editingFinished()), this, SLOT(makePlot()));
      connect(ui->lineEdit_period, SIGNAL(editingFinished()), this, SLOT(makePlot()));
      connect(ui->lineEdit_ampl, SIGNAL(editingFinished()), this, SLOT(makePlot()));
+     */
+    connect(ui->sine, SIGNAL(clicked()), this, SLOT(drawSpecialButtons()));
+    connect(ui->square, SIGNAL(clicked()), this, SLOT(drawSpecialButtons()));
+    connect(ui->step, SIGNAL(clicked()), this, SLOT(drawSpecialButtons()));
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::timerWizualizacja()
+{
+    double skala = (ui->lineEdit_skala->text()).toDouble();
+    int okres = t*skala*10;
+    timer->start(okres);
+    wizual = 0;
+}
+
+void MainWindow::wizualizacja()
+{
+    if (wizual < 100)
+    {
+        wizual++;
+        ui->horizontalSlider->setValue(wizual);
+    }
+    else timer->stop();
 }
 
 void MainWindow::drawIcons()
@@ -89,26 +118,26 @@ void MainWindow::drawSpecialButtons()           // dla sinusoidy i fali prostok�
 }
 
 double MainWindow::f(int x, double A, QVector<double> h, QVector<double> u1, QVector<double>& u2){      //funkcja co zwraca wartość funkcji z treści zadania
-    double g = 9.81;                                        //przyspieszenie ziemskie
-    double t = (ui->lineEdit_time->text()).toDouble();       // liczba sekund symulacji
-    double s = (ui->lineEdit_samples->text()).toDouble();    // liczba próbek na sekundę
+    //double g = 9.81;                                        //przyspieszenie ziemskie
+    //double t = (ui->lineEdit_time->text()).toDouble();       // liczba sekund symulacji
+    //double s = (ui->lineEdit_samples->text()).toDouble();    // liczba próbek na sekundę
     //double A1 = (ui->lineEdit_A1->text()).toDouble();      // pole przekroju odplywu nr1
     //double A2 = (ui->lineEdit_A2->text()).toDouble();      // pole przekroju odplywu nr2
-    double period = (ui->lineEdit_period->text()).toDouble(); // okres
-    double ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
+    //double period = (ui->lineEdit_period->text()).toDouble(); // okres
+    //double ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
     double wynik = 0;
-    if(h[x-1] > u1[x]/4){                                   //Takie zabezpieczenie że jak mało jest wody w zbiorniku to żeby się nie dzieliło przez zero zamienia
+    if(h[x-1] >= pocz){                                   //Takie zabezpieczenie że jak mało jest wody w zbiorniku to żeby się nie dzieliło przez zero zamienia
         u2[x] = A*sqrt(2*g*h[x-1]);                         //poziom wody na wartość wpływającego strumienia
         wynik = ((u1[x]-A*sqrt(2*g*h[x-1]))/(3.14*h[x-1]*h[x-1]))*(1/s);
     }else{
-        double h = u1[x];
+        double h = pocz;
         u2[x] = A*sqrt(2*g*h);
         wynik = ((u1[x]-A*sqrt(2*g*h))/(3.14*h*h))*(1/s);
     }
     return wynik;
     //return 0;
 }
-
+/*
 QVector<double> MainWindow::calkowanie(){               //to jest jeszcze nie gotowe, nie patrzeć!!!!!
     double g = 9.81;
     double s = 0;
@@ -143,18 +172,19 @@ QVector<double> MainWindow::calkowanie(){               //to jest jeszcze nie go
       //s = dx / 6 * (f(xp) + f(xk) + 2 * s + 4 * st);
       return h;
 }
-
+*/
 QVector<double> MainWindow::calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2){        //to jest całkowanie metodą kwadratów
     double calkaMax = 0;                                //wartość maks całki potrzebna do narysowania wykresu (maks podziałki pionowej)
     double uMax = 0;                                    //wartość maks całki potrzebna do narysowania wykresu (maks podziałki pionowej)
-    int t = (ui->lineEdit_time->text()).toInt();       // liczba sekund symulacji
-    int s = (ui->lineEdit_samples->text()).toInt();    // liczba próbek na sekundę
+    //int t = (ui->lineEdit_time->text()).toInt();       // liczba sekund symulacji
+    //int s = (ui->lineEdit_samples->text()).toInt();    // liczba próbek na sekundę
     double calka = 0;
     for(int i=1; i<t*s+1; i++){                         //tutaj całkujemy metodą kwadratów
         calka += f(i, A, h, u1, u2);
         h[i] = calka;
         if(calkaMax < calka) calkaMax = calka;
         if(uMax < u2[i]) uMax = u2[i];
+        ui->pasekPostepu->setValue(100*i/(t*s));
     }
     QVector<double> max(2);
     max[0] = calkaMax;
@@ -180,9 +210,9 @@ void MainWindow::paintEvent(QPaintEvent *event)                 //Rysowanie pros
     painter.setBrush(QBrush(Qt::blue, Qt::SolidPattern));
     //int polozenie_x = 1000;
     //int polozenie_y = 182;
-    int x = ui->horizontalSlider->value()*(ui->lineEdit_time->text()).toInt()*(ui->lineEdit_samples->text()).toInt()/100;
+    int x = ui->horizontalSlider->value()*t*s/100;
     int polozenie_x = pozycja.x();
-    int polozenie_y = pozycja.y()+12;
+    int polozenie_y = pozycja.y()+15;
     int wysokosc = 144;
     double poziom1 = wysokosc*(h1[x]/calka1max);
     double poziom2 = wysokosc*(h2[x]/calka2max);
@@ -190,9 +220,9 @@ void MainWindow::paintEvent(QPaintEvent *event)                 //Rysowanie pros
     painter.drawRect(QRect(polozenie_x+48, polozenie_y+52+wysokosc-poziom1, 191, poziom1));
     painter.drawRect(QRect(polozenie_x+280, polozenie_y+229+wysokosc-poziom2, 191, poziom2));
 
-    double s = (ui->lineEdit_samples->text()).toDouble();    // liczba próbek na sekundę
-    double period = (ui->lineEdit_period->text()).toDouble(); // okres
-    double ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
+    //double s = (ui->lineEdit_samples->text()).toDouble();    // liczba próbek na sekundę
+    //double period = (ui->lineEdit_period->text()).toDouble(); // okres
+    //double ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
     /*
     double u = 0;
     if (ui->sine->isChecked() == TRUE)
@@ -223,6 +253,7 @@ void MainWindow::paintEvent(QPaintEvent *event)                 //Rysowanie pros
 
 void MainWindow::makePlot()
 {
+    ui->gotowe->setText("Całka pierwsza");
 
     drawSpecialButtons();
     checkValidation();
@@ -288,12 +319,13 @@ void MainWindow::makePlot()
           if(calka < 0.01) koniec = i/s;
         }
     */
-    int t = (ui->lineEdit_time->text()).toInt();       // liczba sekund symulacji
-    int s = (ui->lineEdit_samples->text()).toInt();    // liczba próbek na sekundę
-    int period = (ui->lineEdit_period->text()).toInt(); // okres
-    double ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
-    double A1 = (ui->lineEdit_A1->text()).toDouble();      // pole przekroju odplywu nr1
-    double A2 = (ui->lineEdit_A2->text()).toDouble();      // pole przekroju odplywu nr2
+    t = (ui->lineEdit_time->text()).toDouble();       // liczba sekund symulacji
+    s = (ui->lineEdit_samples->text()).toDouble();    // liczba próbek na sekundę
+    period = (ui->lineEdit_period->text()).toDouble(); // okres
+    ampl = (ui->lineEdit_ampl->text().toDouble());       // amplituda pobudzenia
+    A1 = (ui->lineEdit_A1->text()).toDouble();      // pole przekroju odplywu nr1
+    A2 = (ui->lineEdit_A2->text()).toDouble();      // pole przekroju odplywu nr2
+    pocz = (ui->lineEdit_pocz->text()).toDouble();     // warunki początkowe
     calka1max = 0.0;
     calka2max = 0.0;
     u2max = 0.0;
@@ -308,8 +340,8 @@ void MainWindow::makePlot()
     QVector<double> x(t*s+1);
 
     x[0] = 0.0;
-    h1[0] = 0.1;       //h(0) = y[0]  warunki początkowe
-    h2[0] = 0.1;
+    h1[0] = pocz;       //h(0) = y[0]  warunki początkowe
+    h2[0] = pocz;
     u1[0] = 0.0;
     u2[0] = 0.0;
     u3[0] = 0.0;
@@ -334,8 +366,12 @@ void MainWindow::makePlot()
     QVector<double> max1(2);
     QVector<double> max2(2);
 
+    //ui->pasekPostepu->show();
     max1 = calkowanieKwadrat(A1, h1, u1, u2);                              //liczymy pierwszy wykres korzystając z metody kwadratów
+    ui->gotowe->setText("Całka druga");
     max2 = calkowanieKwadrat(A2, h2, u2, u3);                              //liczymy drugi wykres korzystając z metody kwadratów
+    //ui->pasekPostepu->hide();
+    QWidget::update();
 
     calka1max = max1[0];
     calka2max = max2[0];
@@ -362,6 +398,7 @@ void MainWindow::makePlot()
     ui->customPlot2->xAxis->setRange(0, t);
     ui->customPlot2->yAxis->setRange(0, calka2max);
     ui->customPlot2->replot();
+    ui->gotowe->setText("Gotowe!");
 }
 
 

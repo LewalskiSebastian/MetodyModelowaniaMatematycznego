@@ -8,6 +8,7 @@
 #include <QDoubleValidator>
 #include <QIntValidator>
 #include <QPainter>
+#include <QTimer>
 
 namespace Ui {
 class MainWindow;
@@ -26,7 +27,6 @@ public:
     QVector<double> calkowanie();
     QVector<double> calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2);
     double f(int x, double A, QVector<double> h, QVector<double> u1, QVector<double>& u2);
-
     QVector<double> u1;                                                   //Wektor strumienia wejsciowego wody (pobudzenia)
     QVector<double> u2;                                                   //Wektor strumienia wejściowego wody do drugiego pojemnika
     QVector<double> u3;                                                   //Wektor strumienia wyjściowego wody z drugiego pojemnika (potrzebny tylko do wizualizacji)
@@ -37,16 +37,31 @@ public:
     double calka1max = 0.0;                                //maksywalna wartośc całki potrzebna do określenia wysokości wykresu
     double calka2max = 0.0;
 
+    double t = 120;
+    double s = 100;
+    double period = 10;
+    double A1 = 0.08;
+    double A2 = 0.07;
+    double pocz = 0.1;
+    double skala = 1;
+    double ampl = 1;
+    double g = 9.81;
+
+    int wizual = 0;
+
 private slots:
     void makePlot();
     void drawIcons();
     void checkValidation();
     void drawSpecialButtons();
+    void timerWizualizacja();
+    void wizualizacja();
 
     void on_horizontalSlider_valueChanged(int value);
 
 private:
     Ui::MainWindow *ui;
+    QTimer *timer;
 };
 /*
 class Wektory
