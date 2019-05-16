@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QTimer>
 
+
 namespace Ui {
 class MainWindow;
 //class Wektory;
@@ -47,6 +48,7 @@ public:
     double ampl = 1;
     double g = 9.81;
 
+    double okresWizual = 0;
     int wizual = 0;
 
 private slots:

@@ -48,16 +48,18 @@ MainWindow::~MainWindow()
 void MainWindow::timerWizualizacja()
 {
     double skala = (ui->lineEdit_skala->text()).toDouble();
-    int okres = t*skala*10;
-    timer->start(okres);
+    okresWizual = t*skala*1000/(ui->horizontalSlider->maximum()*1.0);
     wizual = 0;
+    if (okresWizual > 10) timer->start(int(okresWizual));                   //dla okresu mniejszego niż 10ms QTimer i tak jest wywoływany co 10ms (wynika z sposobu działania QT)
+    else timer->start(10);                                                  //Więc inaczej załatwimy większe "prędkości wizualizacji"
 }
 
 void MainWindow::wizualizacja()
 {
-    if (wizual < 100)
+    if (wizual < ui->horizontalSlider->maximum())
     {
-        wizual++;
+        if (okresWizual > 10) wizual++;
+        else wizual += 10/okresWizual;
         ui->horizontalSlider->setValue(wizual);
     }
     else timer->stop();
@@ -210,12 +212,14 @@ void MainWindow::paintEvent(QPaintEvent *event)                 //Rysowanie pros
     painter.setBrush(QBrush(Qt::blue, Qt::SolidPattern));
     //int polozenie_x = 1000;
     //int polozenie_y = 182;
-    int x = ui->horizontalSlider->value()*t*s/100;
+    int x = ui->horizontalSlider->value()*t*s/ui->horizontalSlider->maximum();
     int polozenie_x = pozycja.x();
     int polozenie_y = pozycja.y()+15;
     int wysokosc = 144;
-    double poziom1 = wysokosc*(h1[x]/calka1max);
-    double poziom2 = wysokosc*(h2[x]/calka2max);
+    double poziom1 = 0;
+    double poziom2 = 0;
+    if (h1[x] >= pocz) poziom1 = wysokosc*(h1[x]/calka1max);
+    if (h2[x] >= pocz) poziom2 = wysokosc*(h2[x]/calka2max);
     //int wypelnienie = ui->horizontalSlider->value();
     painter.drawRect(QRect(polozenie_x+48, polozenie_y+52+wysokosc-poziom1, 191, poziom1));
     painter.drawRect(QRect(polozenie_x+280, polozenie_y+229+wysokosc-poziom2, 191, poziom2));
@@ -366,11 +370,14 @@ void MainWindow::makePlot()
     QVector<double> max1(2);
     QVector<double> max2(2);
 
+    QElapsedTimer czas;                                                             //timer służący do pomiaru czasu całkowania
+    czas.start();
     //ui->pasekPostepu->show();
     max1 = calkowanieKwadrat(A1, h1, u1, u2);                              //liczymy pierwszy wykres korzystając z metody kwadratów
     ui->gotowe->setText("Całka druga");
     max2 = calkowanieKwadrat(A2, h2, u2, u3);                              //liczymy drugi wykres korzystając z metody kwadratów
     //ui->pasekPostepu->hide();
+    ui->label_czas->setText(QStringLiteral("%1 ms").arg(czas.elapsed()));
     QWidget::update();
 
     calka1max = max1[0];
