@@ -93,6 +93,8 @@ void MainWindow::checkValidation()
     ui->lineEdit_samples->setValidator(parameters);
     ui->lineEdit_ampl->setValidator(parameters2);
     ui->lineEdit_period->setValidator(parameters2);
+    ui->lineEdit_skala->setValidator(hole);
+    ui->lineEdit_pocz->setValidator(hole);
 }
 
 void MainWindow::drawSpecialButtons()           // dla sinusoidy i fali prostokątnej rysuje dodatkowe pole(a)
@@ -118,7 +120,7 @@ void MainWindow::drawSpecialButtons()           // dla sinusoidy i fali prostok�
         ui->label_7->setVisible(FALSE);
     }
 }
-
+/*
 double MainWindow::f(int x, double A, QVector<double> h, QVector<double> u1, QVector<double>& u2){      //funkcja co zwraca wartość funkcji z treści zadania
     //double g = 9.81;                                        //przyspieszenie ziemskie
     //double t = (ui->lineEdit_time->text()).toDouble();       // liczba sekund symulacji
@@ -138,6 +140,19 @@ double MainWindow::f(int x, double A, QVector<double> h, QVector<double> u1, QVe
     }
     return wynik;
     //return 0;
+} */
+
+double MainWindow::f(int x, double A, double h, QVector<double> u1, QVector<double>& u2){
+    double wynik = 0;
+    if(h >= pocz){                                   //Takie zabezpieczenie że jak mało jest wody w zbiorniku to żeby się nie dzieliło przez zero zamienia
+        u2[x] = A*sqrt(2*g*h);                         //poziom wody na wartość wpływającego strumienia
+        wynik = ((u1[x]-A*sqrt(2*g*h))/(3.14*h*h))*(1/s);
+    }else{
+        double h = pocz;
+        u2[x] = A*sqrt(2*g*h);
+        wynik = ((u1[x]-A*sqrt(2*g*h))/(3.14*h*h))*(1/s);
+    }
+    return wynik;
 }
 /*
 QVector<double> MainWindow::calkowanie(){               //to jest jeszcze nie gotowe, nie patrzeć!!!!!
@@ -182,11 +197,99 @@ QVector<double> MainWindow::calkowanieKwadrat(double A, QVector<double>& h, QVec
     //int s = (ui->lineEdit_samples->text()).toInt();    // liczba próbek na sekundę
     double calka = 0;
     for(int i=1; i<t*s+1; i++){                         //tutaj całkujemy metodą kwadratów
-        calka += f(i, A, h, u1, u2);
+        calka += f(i, A, h[i-1], u1, u2);
         h[i] = calka;
         if(calkaMax < calka) calkaMax = calka;
         if(uMax < u2[i]) uMax = u2[i];
         ui->pasekPostepu->setValue(100*i/(t*s));
+        wartosci_koniec[0] = calka;
+    }
+    QVector<double> max(2);
+    max[0] = calkaMax;
+    max[1] = uMax;
+    return max;
+}
+
+QVector<double> MainWindow::calkowanieTrapez(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2){
+    double calkaMax = 0;
+    double uMax = 0;
+    double calka = 0;
+    double calka2 = 0;
+    double pole = 0;
+    for(int i = 2; i < t*s+1; i++){
+        calka = f(i, A, h[i-1], u1, u2)*s;
+        calka2 = f(i-1, A, h[i-1], u1, u2)*s;
+        pole += (calka + calka2)/(2*s);
+        h[i] = pole;
+        if(i == 2) h[1] = pole;
+        if(calkaMax < pole) calkaMax = pole;
+        if(uMax < u2[i]) uMax = u2[i];
+        ui->pasekPostepu->setValue((100*i)/(t*s));
+        wartosci_koniec[1] = pole;
+    }
+    QVector<double> max(2);
+    max[0] = calkaMax;
+    max[1] = uMax;
+    return max;
+}
+
+QVector<double> MainWindow::calkowanieSimpson(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2){
+    double calkaMax = 0;
+    double uMax = 0;
+    double calka = 0;
+    double calka2 = 0;
+    double calka3 = 0;
+    double pole = 0;
+    for(int i = 3; i < t*s+1; i++){
+
+        calka = f(i, A, h[i-1], u1, u2)*s;
+        calka2 = f(i-1, A, h[i-1], u1, u2)*s;
+        calka3 = f(i-2, A, h[i-1], u1, u2)*s;
+        pole += 1/(3*s*2)*(calka3 + 4*calka2 + calka);
+        h[i] = pole;
+        //h[i - 1] = pole;
+        //
+        if(i == 3){
+            h[1] = pole;        // ?? jak w Runge Kutta
+            h[2] = pole;
+        }
+        if(calkaMax < pole) calkaMax = pole;
+        if(uMax < u2[i]) uMax = u2[i];
+        ui->pasekPostepu->setValue((100*i)/(t*s)+1);
+        wartosci_koniec[2] = pole;
+    }
+    QVector<double> max(2);
+    max[0] = calkaMax;
+    max[1] = uMax;
+    return max;
+}
+
+QVector<double> MainWindow::calkowanieRungeKutha(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2){
+    double calkaMax = 0;
+    double uMax = 0;
+    double K1 = 0;
+    double K2 = 0;
+    double K3 = 0;
+    double K4 = 0;
+    double pole = 0;
+    for(int i = 3; i < t*s+1; i++){
+
+        K1 = f(i-2, A, h[i-1], u1, u2);
+        K2 = f(i-1, A, h[i-1] + 0.5*K1, u1, u2);
+        K3 = f(i-1, A, h[i-1] + 0.5*K2, u1, u2);
+        K4 = f(i, A, h[i-1] + K3, u1, u2);
+
+        pole += 1.0/6.0*(K1 + 2*K2 + 2*K3 + K4);
+        h[i] = pole;
+
+        if(i == 3) {
+            h[1] = pole;
+            h[2] = pole;        // ?? zeby na początku nie wychodziły wartości jakieś dziwne xd ??
+        }
+        if(calkaMax < pole) calkaMax = pole;
+        if(uMax < u2[i]) uMax = u2[i];
+        ui->pasekPostepu->setValue((100*i)/(t*s)+1);
+        wartosci_koniec[3] = pole;  // do wyswietlenia ostatniej wart w calce do porówania metod calkowania (aktualnie nie wystwietlam tego xd)
     }
     QVector<double> max(2);
     max[0] = calkaMax;
@@ -335,7 +438,11 @@ void MainWindow::makePlot()
     u2max = 0.0;
     u3max = 0.0;
 
-
+ /*   u1.clear();
+    u2.clear();
+    u3.clear();
+    h1.clear();
+    h2.clear(); */
     u1.resize(t*s+1);                                                   //Wektor strumienia wejsciowego wody (pobudzenia)
     u2.resize(t*s+1);                                                   //Wektor strumienia wejściowego wody do drugiego pojemnika
     u3.resize(t*s+1);                                                   //Wektor strumienia wyjściowego wody z drugiego pojemnika (potrzebny tylko do wizualizacji)
@@ -373,11 +480,35 @@ void MainWindow::makePlot()
     QElapsedTimer czas;                                                             //timer służący do pomiaru czasu całkowania
     czas.start();
     //ui->pasekPostepu->show();
-    max1 = calkowanieKwadrat(A1, h1, u1, u2);                              //liczymy pierwszy wykres korzystając z metody kwadratów
+    if(ui->c_prostokat->isChecked())
+        max1 = calkowanieKwadrat(A1, h1, u1, u2);                              //liczymy pierwszy wykres korzystając z metody kwadratów
+    else if(ui->c_trapez->isChecked())
+        max1 = calkowanieTrapez(A1, h1, u1, u2);
+    else if(ui->c_simpson->isChecked())
+        max1 = calkowanieSimpson(A1, h1, u1, u2);
+    else
+        max1 = calkowanieRungeKutha(A1, h1, u1, u2);
+    //max1 = calkowanieKwadrat(A1, h1, u1, u2);                              //liczymy pierwszy wykres korzystając z metody kwadratów
+    //max1 = calkowanieTrapez(A1, h1, u1, u2);
+    //max1 = calkowanieSimpson(A1, h1, u1, u2);
+
     ui->gotowe->setText("Całka druga");
-    max2 = calkowanieKwadrat(A2, h2, u2, u3);                              //liczymy drugi wykres korzystając z metody kwadratów
+    //max2 = calkowanieKwadrat(A2, h2, u2, u3);                              //liczymy drugi wykres korzystając z metody kwadratów
+    //max2 = calkowanieTrapez(A2, h2, u2, u3);
+    //max2 = calkowanieSimpson(A2, h2, u2, u3);
+    if(ui->c_prostokat->isChecked())
+        max2 = calkowanieKwadrat(A2, h2, u2, u3);                              //liczymy drugi wykres korzystając z metody kwadratów
+    else if(ui->c_trapez->isChecked())
+        max2 = calkowanieTrapez(A2, h2, u2, u3);
+    else if(ui->c_simpson->isChecked())
+        max2 = calkowanieSimpson(A2, h2, u2, u3);
+    else
+        max2 = calkowanieRungeKutha(A2, h2, u2, u3);
     //ui->pasekPostepu->hide();
     ui->label_czas->setText(QStringLiteral("%1 ms").arg(czas.elapsed()));
+
+
+
     QWidget::update();
 
     calka1max = max1[0];

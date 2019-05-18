@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>projektMMM</string>
   </property>
+  <property name="layoutDirection">
+   <enum>Qt::LeftToRight</enum>
+  </property>
   <property name="styleSheet">
    <string notr="true">QMainWindow{
 	background-color: white;
@@ -265,7 +268,7 @@
      <rect>
       <x>870</x>
       <y>110</y>
-      <width>101</width>
+      <width>121</width>
       <height>16</height>
      </rect>
     </property>
@@ -396,7 +399,7 @@
      <rect>
       <x>870</x>
       <y>160</y>
-      <width>111</width>
+      <width>121</width>
       <height>16</height>
      </rect>
     </property>
@@ -435,7 +438,7 @@
      <rect>
       <x>990</x>
       <y>160</y>
-      <width>111</width>
+      <width>131</width>
       <height>16</height>
      </rect>
     </property>
@@ -482,6 +485,77 @@
      <string>czas</string>
     </property>
    </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>1310</x>
+      <y>260</y>
+      <width>141</width>
+      <height>151</height>
+     </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="title">
+     <string>Wybierz calkowanie:</string>
+    </property>
+    <widget class="QRadioButton" name="c_prostokat">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>met. prostokątów</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="c_trapez">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>111</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>met. trapezów</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="c_simpson">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>90</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>met. Simpsona</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="c_runge">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>120</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>met. Runge-Kutta</string>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -489,7 +563,7 @@
      <x>0</x>
      <y>0</y>
      <width>1472</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

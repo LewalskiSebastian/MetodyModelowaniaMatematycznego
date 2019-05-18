@@ -27,7 +27,11 @@ public:
     virtual void paintEvent(QPaintEvent *event);
     QVector<double> calkowanie();
     QVector<double> calkowanieKwadrat(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2);
-    double f(int x, double A, QVector<double> h, QVector<double> u1, QVector<double>& u2);
+    QVector<double> calkowanieTrapez(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2);
+    QVector<double> calkowanieSimpson(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2);
+    QVector<double> calkowanieRungeKutha(double A, QVector<double>& h, QVector<double> u1, QVector<double>& u2);
+   // double f(int x, double A, QVector<double> h, QVector<double> u1, QVector<double>& u2);
+    double f(int x, double A, double h, QVector<double> u1, QVector<double>& u2);  // wcześniej f_runge
     QVector<double> u1;                                                   //Wektor strumienia wejsciowego wody (pobudzenia)
     QVector<double> u2;                                                   //Wektor strumienia wejściowego wody do drugiego pojemnika
     QVector<double> u3;                                                   //Wektor strumienia wyjściowego wody z drugiego pojemnika (potrzebny tylko do wizualizacji)
@@ -50,6 +54,7 @@ public:
 
     double okresWizual = 0;
     int wizual = 0;
+    double wartosci_koniec[4]; // pamietaj aby zmienic !!!  lub usunąć ? xd
 
 private slots:
     void makePlot();
