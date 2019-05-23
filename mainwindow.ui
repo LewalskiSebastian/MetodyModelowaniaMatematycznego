@@ -556,22 +556,32 @@
      </property>
     </widget>
    </widget>
-<<<<<<< HEAD
    <widget class="QPushButton" name="zapisz">
     <property name="geometry">
      <rect>
-      <x>1350</x>
-      <y>150</y>
+      <x>1110</x>
+      <y>190</y>
       <width>111</width>
-      <height>31</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
      <string>Zapisz do pliku</string>
     </property>
    </widget>
-=======
->>>>>>> d175ea89719e1e355feaab7d689ddefbef5727ff
+   <widget class="QPushButton" name="zapiszCSV">
+    <property name="geometry">
+     <rect>
+      <x>1230</x>
+      <y>190</y>
+      <width>111</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Zapisz jako CSV</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -579,7 +589,7 @@
      <x>0</x>
      <y>0</y>
      <width>1472</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

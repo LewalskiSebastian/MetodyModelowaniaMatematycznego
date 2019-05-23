@@ -64,6 +64,7 @@ private slots:
     void timerWizualizacja();
     void wizualizacja();
     void zapisz();
+    void zapiszCSV();
 
     void on_horizontalSlider_valueChanged(int value);
 

@@ -34,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->wizualizacja, SIGNAL(clicked()), this, SLOT(timerWizualizacja()));
     connect(timer, SIGNAL(timeout()), this, SLOT(wizualizacja()));
     connect(ui->zapisz, SIGNAL(clicked()), this, SLOT(zapisz()));
+    connect(ui->zapiszCSV, SIGNAL(clicked()), this, SLOT(zapiszCSV()));
     /*
      connect(ui->sine, SIGNAL(clicked()), this, SLOT(makePlot()));
      connect(ui->square, SIGNAL(clicked()), this, SLOT(makePlot()));
@@ -78,8 +79,9 @@ void MainWindow::wizualizacja()
 void MainWindow::zapisz()
 {
     QDateTime data = QDateTime::currentDateTime();
-    QString plik = QFileDialog::getOpenFileName(this, "Otwórz plik", "C://");
-    QFile file(plik);
+    QString lokalizacja = QFileDialog::getExistingDirectory(this, "Wybierz lokalizację", "C://");
+    QString plik = "log-" + data.toString("yyyy-MM-dd") + "-" + data.toString("hh-mm-ss") + ".txt";
+    QFile file(lokalizacja + "/" + plik);
 
         if (file.open(QIODevice::ReadWrite | QIODevice::Append)) {
             QTextStream stream(&file);
@@ -93,6 +95,13 @@ void MainWindow::zapisz()
                 stream << "Simpsona" << endl;
             else
                 stream << "Runge-Kutta" << endl;
+            stream << "Pobudzenie: ";
+            if(ui->step->isChecked())
+                stream << "skok jednostkowy" << endl;
+            else if(ui->sine->isChecked())
+                stream << "sinus" << endl;
+            else
+                stream << "prostokąt" << endl;
             stream << "Czestotliwosc probkowania: " << s << endl;
             stream << "Czas symulacji: " << t << endl;
             stream << "Aplituda: " << ampl << endl;
@@ -108,7 +117,7 @@ void MainWindow::zapisz()
             for(int i = 0; i <= t*s; i++){
                 stream << h2[i] << endl;
             }
-            QMessageBox::information(this, "Informacja","Zapis zakończony powodzeniem");
+            QMessageBox::information(this, "Zapis zakończony powodzeniem","Zapisano jako " + plik);
         } else QMessageBox::warning(this,"Błąd","Zapis zakończony niepowodzeniem");
 
   /*   fstream file;
@@ -122,6 +131,48 @@ void MainWindow::zapisz()
      file << std::endl << std::endl;
      file << "Line 2";
      file.close();*/
+}
+
+void MainWindow::zapiszCSV()
+{
+    QDateTime data = QDateTime::currentDateTime();
+    QString lokalizacja = QFileDialog::getExistingDirectory(this, "Wybierz lokalizację", "C://");
+    QString plik = data.toString("yyyy-MM-dd") + "-" + data.toString("hh-mm-ss") + ".csv";
+    QFile file(lokalizacja + "/" + plik);
+
+        if (file.open(QIODevice::ReadWrite | QIODevice::Append)) {
+            QTextStream stream(&file);
+            stream << "Data," << data.toString("yyyy-MM-dd") << " " << data.toString("hh:mm:ss") << endl;
+            stream << "Metoda calkowania,";
+            if(ui->c_prostokat->isChecked())
+                stream << "prostokatow" << endl;
+            else if(ui->c_trapez->isChecked())
+                stream << "trapezow" << endl;
+            else if(ui->c_simpson->isChecked())
+                stream << "Simpsona" << endl;
+            else
+                stream << "Runge-Kutta" << endl;
+            stream << "Pobudzenie,";
+            if(ui->step->isChecked())
+                stream << "skok jednostkowy" << endl;
+            else if(ui->sine->isChecked())
+                stream << "sinus" << endl;
+            else
+                stream << "prostokąt" << endl;
+            stream << "Czestotliwosc probkowania," << s << endl;
+            stream << "Czas symulacji," << t << endl;
+            stream << "Aplituda," << ampl << endl;
+            stream << "Warunki pczatkowe," << pocz << endl;
+            stream << "Zwezka A1," << A1 << endl;
+            stream << "Zwezka A2," << A2 << endl;
+            stream << "Czas calkowan," << ui->label_czas->text() << endl;
+            stream << "Poziom wody pojemnika 1,";
+            stream << "Poziom wody pojemnika 2" << endl;
+            for(int i = 0; i <= t*s; i++){
+                stream << h1[i] << "," << h2[i] << endl;
+            }
+            QMessageBox::information(this, "Zapis zakończony powodzeniem","Zapisano jako " + plik);
+        } else QMessageBox::warning(this,"Błąd","Zapis zakończony niepowodzeniem");
 }
 
 void MainWindow::drawIcons()
