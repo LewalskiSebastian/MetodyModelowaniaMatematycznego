@@ -5,6 +5,15 @@
 #include <time.h>       /* time */
 #include <cmath>
 #include <math.h>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QFile>
+#include <QTextStream>
+#include <iostream>
+#include <fstream>
+#include <QDateTime>
+
+using namespace std;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -24,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //connect(ui->wizualizacja, SIGNAL(clicked()), this, ui->horizontalSlider()));
     connect(ui->wizualizacja, SIGNAL(clicked()), this, SLOT(timerWizualizacja()));
     connect(timer, SIGNAL(timeout()), this, SLOT(wizualizacja()));
+    connect(ui->zapisz, SIGNAL(clicked()), this, SLOT(zapisz()));
     /*
      connect(ui->sine, SIGNAL(clicked()), this, SLOT(makePlot()));
      connect(ui->square, SIGNAL(clicked()), this, SLOT(makePlot()));
@@ -63,6 +73,55 @@ void MainWindow::wizualizacja()
         ui->horizontalSlider->setValue(wizual);
     }
     else timer->stop();
+}
+
+void MainWindow::zapisz()
+{
+    QDateTime data = QDateTime::currentDateTime();
+    QString plik = QFileDialog::getOpenFileName(this, "Otwórz plik", "C://");
+    QFile file(plik);
+
+        if (file.open(QIODevice::ReadWrite | QIODevice::Append)) {
+            QTextStream stream(&file);
+            stream << data.toString("yyyy-MM-dd") << data.toString("hh:ss:mm") << endl;
+            stream << "Metoda calkowania: ";
+            if(ui->c_prostokat->isChecked())
+                stream << "prostokatow" << endl;
+            else if(ui->c_trapez->isChecked())
+                stream << "trapezow" << endl;
+            else if(ui->c_simpson->isChecked())
+                stream << "Simpsona" << endl;
+            else
+                stream << "Runge-Kutta" << endl;
+            stream << "Czestotliwosc probkowania: " << s << endl;
+            stream << "Czas symulacji: " << t << endl;
+            stream << "Aplituda: " << ampl << endl;
+            stream << "Warunki pczatkowe: " << pocz << endl;
+            stream << "Zwezka A1: " << A1 << endl;
+            stream << "Zwezka A2: " << A2 << endl;
+            stream << "Czas calkowan: " << ui->label_czas->text() << endl;
+            stream << "Poziom wody pojemnika 1: " << endl;
+            for(int i = 0; i <= t*s; i++){
+                stream << h1[i] << endl;
+            }
+            stream << "Poziom wody pojemnika 2: " << endl;
+            for(int i = 0; i <= t*s; i++){
+                stream << h2[i] << endl;
+            }
+            QMessageBox::information(this, "Informacja","Zapis zakończony powodzeniem");
+        } else QMessageBox::warning(this,"Błąd","Zapis zakończony niepowodzeniem");
+
+  /*   fstream file;
+     std::string current_locale_text = plik.toLocal8Bit().constData();
+     file.open(current_locale_text,ios::out|ios::binary);
+     file << "Line 1 goes here \n\n line 2 goes here";
+
+     // or
+
+     file << "Line 1";
+     file << std::endl << std::endl;
+     file << "Line 2";
+     file.close();*/
 }
 
 void MainWindow::drawIcons()
@@ -346,7 +405,7 @@ void MainWindow::paintEvent(QPaintEvent *event)                 //Rysowanie pros
         else u = 0;
     }
     */
-    int gruboscPen = (u1[x]*29)-1;
+    int gruboscPen = (u1[x]*29/ampl)-1;
     painter.setPen(QPen(Qt::blue, gruboscPen));
     painter.drawLine(polozenie_x+144, polozenie_y+47, polozenie_x+144, polozenie_y+144+150);
     gruboscPen = ((u2[x]/u2max)*29)-1;

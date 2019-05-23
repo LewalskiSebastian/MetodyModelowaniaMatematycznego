@@ -63,6 +63,7 @@ private slots:
     void drawSpecialButtons();
     void timerWizualizacja();
     void wizualizacja();
+    void zapisz();
 
     void on_horizontalSlider_valueChanged(int value);
 

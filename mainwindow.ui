@@ -556,6 +556,22 @@
      </property>
     </widget>
    </widget>
+<<<<<<< HEAD
+   <widget class="QPushButton" name="zapisz">
+    <property name="geometry">
+     <rect>
+      <x>1350</x>
+      <y>150</y>
+      <width>111</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Zapisz do pliku</string>
+    </property>
+   </widget>
+=======
+>>>>>>> d175ea89719e1e355feaab7d689ddefbef5727ff
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
